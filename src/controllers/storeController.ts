@@ -15,4 +15,20 @@ export class StoreController {
       sendErrorResponse(res, 400, errorMessage);
     }
   }
+  static async findNearbyStores(req: Request, res: Response) {
+    try {
+      const { zipCode, number } = req.body;
+      const stores = await StoreService.findNearbyStores(
+        zipCode as string,
+        number as string
+      );
+      res.status(200).json(stores);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : handleError(error, "Error finding nearby stores");
+      sendErrorResponse(res, 400, errorMessage);
+    }
+  }
 }
