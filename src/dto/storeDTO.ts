@@ -4,26 +4,30 @@ class StoreDTO {
   public name: string;
   public address: string;
   public zipCode: string;
-  public distance: string;
+  public number: string;
+  public distance?: string;
 
   constructor(
     name: string,
     address: string,
     zipCode: string,
-    distance: string
+    number: string,
+    distance?: string
   ) {
     this.name = name;
     this.address = address;
     this.zipCode = zipCode;
+    this.number = number;
     this.distance = distance;
   }
 
-  static fromStore(store: Store, distance: number): StoreDTO {
+  static fromStore(store: Store, distance?: number): StoreDTO {
     return new StoreDTO(
       store.getName(),
       store.getAddress(),
       store.getZipCode(),
-      distance.toFixed(2)
+      store.getNumber(),
+      distance ? distance.toFixed(2) : undefined
     );
   }
 }

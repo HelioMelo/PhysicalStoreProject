@@ -14,7 +14,6 @@ app.use("/api", storeRoutes);
 const startServer = async () => {
   try {
     await createStoresTable();
-
     app.listen(PORT, () => {
       console.log(`Server is running on http://localhost:${PORT}`);
     });
