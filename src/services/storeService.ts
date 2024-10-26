@@ -1,77 +1,85 @@
+import {
+  determineDocumentType,
+  isValidCNPJ,
+  isValidCPF,
+} from "../utils/storeUtils";
 import { zipCodeApi } from "../api/zipCodeApi";
 import { geocodeAddressApi } from "../api/geocodeAddressApi";
-import { Store } from "../models/store";
+import { saveStore, getAllStores } from "../repository/storeRepository";
 import { StoreDTO } from "../dto/storeDTO";
-import {
-  saveStore,
-  checkStoreExists,
-  getAllStores,
-} from "../repository/storeRepository";
-import { validateStoreDTO, handleError } from "../errors/errorHandlers";
-import { AddressService } from "./AddressService";
-import { DistanceCalculator } from "../utils/DistanceCalculator";
+import { handleError, validateStoreDTO } from "../errors/errorHandlers";
+import { DistanceCalculator, StoreUtils } from "../utils/storeUtils";
+import { AddressService } from "./addressService";
+import { ValidationError, handleKnownErrors } from "../errors/customErrors";
+import { DocumentTypeEnum } from "../enums/documentTypeEnum";
 
 export class StoreService {
   static async saveStore(storeDTO: StoreDTO) {
     try {
       validateStoreDTO(storeDTO);
 
-      const storeExists = await checkStoreExists(
-        storeDTO.zipCode,
-        storeDTO.number
-      );
-      if (storeExists) {
-        throw new Error("A loja já existe nesse endereço.");
+      storeDTO.documentType = determineDocumentType(storeDTO.document);
+
+      if (
+        storeDTO.documentType === DocumentTypeEnum.CPF &&
+        !isValidCPF(storeDTO.document)
+      ) {
+        throw new ValidationError("CPF inválido.");
+      } else if (
+        storeDTO.documentType === DocumentTypeEnum.CNPJ &&
+        !isValidCNPJ(storeDTO.document)
+      ) {
+        throw new ValidationError("CNPJ inválido.");
       }
 
-      const addressData = await zipCodeApi(storeDTO.zipCode);
+      const addressData = await zipCodeApi(storeDTO.address.zipCode);
+      if (!addressData) {
+        throw new ValidationError("Endereço não encontrado.");
+      }
+
       const fullAddress = `${addressData.logradouro}, ${
-        storeDTO.number || "S/N"
-      }, ${addressData.bairro}, ${addressData.localidade}, ${addressData.uf}`;
+        storeDTO.address.number || "S/N"
+      }`;
+
       const coordinates = await geocodeAddressApi(fullAddress);
       if (!coordinates) {
-        throw new Error("Não foi possível obter as coordenadas.");
+        throw new ValidationError("Não foi possível obter as coordenadas.");
       }
 
-      const store = new Store(
-        storeDTO.name,
-        fullAddress,
-        storeDTO.zipCode,
-        storeDTO.number || "S/N",
-        parseFloat(coordinates.latitude),
-        parseFloat(coordinates.longitude)
-      );
-
+      const store = StoreUtils.toStore(storeDTO, addressData, coordinates);
       const savedStore = await saveStore(store);
-      return StoreDTO.fromStore(store);
+
+      return savedStore;
     } catch (error) {
-      const errorMessage = handleError(error, "Erro ao salvar loja");
-      throw new Error(errorMessage);
+      const errorMessage = handleKnownErrors(error);
+      handleError(errorMessage, "Erro ao salvar loja");
+      throw error;
     }
   }
+
   static async findNearbyStores(
     zipCode: string,
     number?: string
   ): Promise<StoreDTO[]> {
     try {
-      validateStoreDTO({ name: "dummy", zipCode });
+      if (!zipCode) {
+        throw new Error("O CEP é obrigatório.");
+      }
 
       const fullAddress = await AddressService.getFullAddress(zipCode, number);
       const coordinates = await AddressService.getCoordinates(fullAddress);
-
       const userLat = parseFloat(coordinates.latitude);
       const userLon = parseFloat(coordinates.longitude);
-
       const stores = await getAllStores();
-
       const nearbyStores = DistanceCalculator.filterNearbyStores(
         stores,
         userLat,
         userLon,
         100
       );
+
       if (nearbyStores.length === 0) {
-        throw new Error("Não há lojas dentro de um raio de 100 km.");
+        throw new Error("Nenhuma loja encontrada num raio de 100 km.");
       }
 
       return nearbyStores;

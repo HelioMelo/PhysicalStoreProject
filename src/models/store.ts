@@ -1,41 +1,47 @@
+import { DocumentTypeEnum } from "../enums/documentTypeEnum";
+import { Address } from "./address";
+
 class Store {
+  private id: number;
   private name: string;
-  private address: string;
-  private zipCode: string;
-  private number: string;
+  private address: Address;
+  private document: string;
   private latitude: number;
   private longitude: number;
+  private documentType: DocumentTypeEnum;
 
   constructor(
+    id: number,
     name: string,
-    address: string,
-    zipCode: string,
-    number: string,
+    document: string,
+    address: Address,
     latitude: number,
-    longitude: number
+    longitude: number,
+    documentType: DocumentTypeEnum
   ) {
+    this.id = id;
     this.name = name;
+    this.document = document;
     this.address = address;
-    this.zipCode = zipCode;
-    this.number = number;
     this.latitude = latitude;
     this.longitude = longitude;
+    this.documentType = documentType;
+  }
+
+  public getId(): number {
+    return this.id;
+  }
+
+  public getDocument(): string {
+    return this.document;
   }
 
   public getName(): string {
     return this.name;
   }
 
-  public getAddress(): string {
+  public getAddress(): Address {
     return this.address;
-  }
-
-  public getZipCode(): string {
-    return this.zipCode;
-  }
-
-  public getNumber(): string {
-    return this.number;
   }
 
   public getLatitude(): number {
@@ -46,7 +52,11 @@ class Store {
     return this.longitude;
   }
 
-  public updateAddress(newAddress: string): void {
+  public getDocumentType(): DocumentTypeEnum {
+    return this.documentType;
+  }
+
+  public updateAddress(newAddress: Address): void {
     this.address = newAddress;
   }
 }

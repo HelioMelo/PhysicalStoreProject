@@ -13,13 +13,39 @@ const pool = new Pool({
   port: Number(process.env.DATABASE_PORT),
 });
 
+const createAddressesTable = async () => {
+  const query = `
+    CREATE TABLE IF NOT EXISTS addresses (
+      id SERIAL PRIMARY KEY,
+      zipCode VARCHAR(10),
+      street VARCHAR(255),
+      number VARCHAR(10),
+      complement VARCHAR(255),
+      neighborhood VARCHAR(255),
+      city VARCHAR(255),
+      state VARCHAR(255)
+
+    );
+  `;
+
+  try {
+    await pool.query(query);
+  } catch (error) {
+    handleError(
+      error instanceof Error ? error : new Error(String(error)),
+      "Erro ao criar endereços de tabela'"
+    );
+  }
+};
+
 const createStoresTable = async () => {
   const query = `
     CREATE TABLE IF NOT EXISTS stores (
       id SERIAL PRIMARY KEY,
       name VARCHAR(100),
-      address VARCHAR(255),
-      zipCode VARCHAR(10),
+      document VARCHAR(50) NOT NULL,
+      documentType VARCHAR(50) NOT NULL,
+      addressId INTEGER REFERENCES addresses(id) ON DELETE CASCADE,
       latitude FLOAT,
       longitude FLOAT
     );
@@ -27,30 +53,21 @@ const createStoresTable = async () => {
 
   try {
     await pool.query(query);
-    console.log("Stores table created or already exists.");
   } catch (error) {
     handleError(
       error instanceof Error ? error : new Error(String(error)),
-      "Error creating table 'stores'"
+      "Erro ao criar tabelas  de lojas '"
     );
   }
 };
 
-const getStores = async (query?: string, values?: any[]): Promise<any[]> => {
-  try {
-    const result = await pool.query(query || "SELECT * FROM stores", values);
-    return result.rows;
-  } catch (error) {
-    handleError(
-      error instanceof Error ? error : new Error(String(error)),
-      "Error fetching stores"
-    );
-    return [];
-  }
+const createTables = async () => {
+  await createAddressesTable();
+  await createStoresTable();
 };
 
 const endPool = async () => {
   await pool.end();
 };
 
-export { createStoresTable, getStores, pool, endPool };
+export { createTables, pool, endPool };
