@@ -10,11 +10,12 @@ const logger = createLogger({
   ),
   transports: [
     new transports.Console(),
-    new transports.File({ filename: "logs/app.log" }),
     new transports.File({ filename: "logs/data.log", level: "info" }),
     new transports.File({ filename: "logs/error.log", level: "error" }),
-    new transports.File({ filename: "logs/query.log", level: "verbose" }),
   ],
 });
 
+export function logError(message: string, details?: any) {
+  logger.error({ message, details });
+}
 export default logger;

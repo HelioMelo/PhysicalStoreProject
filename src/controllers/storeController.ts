@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { StoreService } from "../services/storeService";
 import { sendErrorResponse, handleError } from "../errors/errorHandlers";
+import { StoreDTO } from "../dto/storeDTO";
 
 export class StoreController {
   static async saveStore(req: Request, res: Response) {
@@ -11,24 +12,25 @@ export class StoreController {
       const errorMessage =
         error instanceof Error
           ? error.message
-          : handleError(error, "Error saving store");
+          : handleError(error, "Erro ao salvar a loja");
       sendErrorResponse(res, 400, errorMessage);
     }
   }
-  static async findNearbyStores(req: Request, res: Response) {
+  static async findNearbyStores(req: Request, res: Response): Promise<void> {
     try {
       const { zipCode, number } = req.body;
-      const stores = await StoreService.findNearbyStores(
-        zipCode as string,
-        number as string
+      const nearbyStores: StoreDTO[] = await StoreService.findNearbyStores(
+        zipCode,
+        number
       );
-      res.status(200).json(stores);
+
+      res.status(200).json(nearbyStores);
     } catch (error) {
       const errorMessage =
         error instanceof Error
           ? error.message
-          : handleError(error, "Error finding nearby stores");
-      sendErrorResponse(res, 400, errorMessage);
+          : handleError(error, "Erro ao buscar lojas próximas");
+      sendErrorResponse(res, 404, errorMessage);
     }
   }
 }

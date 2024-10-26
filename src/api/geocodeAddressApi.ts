@@ -15,28 +15,33 @@ const geocodeAddressApi = async (address: string) => {
     );
 
     if (response.status !== 200) {
-      logger.error(`Error in geocoding request: ${response.statusText}`);
-      throw new Error("Error in geocoding request.");
+      logger.error(
+        `Erro na solicitação de geocodificação: ${response.statusText}`
+      );
+      throw new Error("Erro na solicitação de geocodificação.");
     }
 
     const data = response.data;
     if (data.length === 0) {
-      logger.warn(`Coordinates not found for address: ${address}`);
-      return null; // Retorna null se não encontrar coordenadas
+      logger.warn(`Coordenadas não encontradas para o endereço: ${address}`);
+      throw new Error(
+        "Não foi possível encontrar as coordenadas para o endereço."
+      );
     }
 
-    logger.info(`Successful geocoding for address: ${address}`);
+    logger.info(`Geocodificação bem-sucedida para endereço: ${address}`);
+
     return {
       latitude: data[0].lat,
       longitude: data[0].lon,
-    }; // Retorna as coordenadas
+    };
   } catch (error) {
     if (error instanceof Error) {
-      logger.error(`Geocoding error: ${error.message}`);
-      throw error; // Propaga o erro
+      logger.error(`Erro de geocodificação: ${error.message}`);
+      throw error;
     } else {
-      logger.error(`Geocoding error: An unknown error occurred.`);
-      throw new Error("An unknown error occurred");
+      logger.error(`Erro de geocodificação: ocorreu um erro desconhecido.`);
+      throw new Error("Ocorreu um erro desconhecido");
     }
   }
 };

@@ -1,6 +1,6 @@
 import axios from "axios";
-import { handleError } from "../errors/errorHandlers"; // Importando manipulador de erros
-import logger from "../utils/logger"; // Importando logger
+import { handleError } from "../errors/errorHandlers";
+import logger from "../utils/logger";
 
 const zipCodeApi = async (zipCode: string) => {
   logger.info(`Fetching data for ZIP code: ${zipCode}`);
@@ -11,17 +11,17 @@ const zipCodeApi = async (zipCode: string) => {
     logger.info(`Response from ViaCEP: ${JSON.stringify(response.data)}`);
 
     if (response.data.erro) {
-      throw new Error("ZIP code not found");
+      throw new Error("CEP não encontrado");
     }
 
     return response.data;
   } catch (error) {
     if (error instanceof Error) {
-      handleError(error, `Error fetching ZIP code: ${zipCode}`);
+      handleError(error, `Erro ao buscar o CEP: ${zipCode}`);
     } else {
       handleError(
-        new Error("An unknown error occurred"),
-        `Error fetching ZIP code: ${zipCode}`
+        new Error("O correu um erro desconhecido"),
+        `Erro ao buscar o CEP: ${zipCode}`
       );
     }
     throw error;

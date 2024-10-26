@@ -1,7 +1,7 @@
 import express from "express";
 import storeRoutes from "./routes/storeRoutes";
 import dotenv from "dotenv";
-import { createStoresTable } from "./db/database";
+import { createTables } from "./db/database";
 
 dotenv.config();
 
@@ -13,12 +13,12 @@ app.use("/api", storeRoutes);
 
 const startServer = async () => {
   try {
-    await createStoresTable();
+    await createTables();
     app.listen(PORT, () => {
       console.log(`Server is running on http://localhost:${PORT}`);
     });
   } catch (error) {
-    console.error("Error starting the server:", error);
+    console.error("Erro ao iniciar o servidor::", error);
   }
 };
 
