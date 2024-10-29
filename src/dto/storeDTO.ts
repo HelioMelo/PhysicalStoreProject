@@ -1,7 +1,6 @@
 import { DocumentTypeEnum } from "../enums/documentTypeEnum";
-
 import { Store } from "../models/store";
-import { AddressDTO } from "../dto/addressDTO";
+import { AddressDTO } from "./addressDTO";
 
 class StoreDTO {
   public id: number;
@@ -9,7 +8,7 @@ class StoreDTO {
   public document: string;
   public address: AddressDTO;
   public documentType: DocumentTypeEnum;
-  public distance?: string;
+  public distance: string;
 
   constructor(
     id: number,
@@ -20,7 +19,7 @@ class StoreDTO {
     distance?: string
   ) {
     if (!name || !document) {
-      throw new Error("Nome e documento e obrigatórios.");
+      throw new Error("Nome e documento são obrigatórios.");
     }
 
     this.id = id;
@@ -28,7 +27,7 @@ class StoreDTO {
     this.document = document;
     this.address = address;
     this.documentType = documentType;
-    this.distance = distance;
+    this.distance = distance || "0.00 km";
   }
 
   static fromStore(store: Store, distance?: number): StoreDTO {
@@ -38,7 +37,7 @@ class StoreDTO {
       store.getDocument(),
       AddressDTO.fromAddress(store.getAddress()),
       store.getDocumentType(),
-      distance ? distance.toFixed(2) : undefined
+      distance ? `${distance.toFixed(2)} km` : undefined
     );
   }
 }

@@ -1,9 +1,8 @@
-import { Store } from "../models/store";
-import { Address } from "../models/address";
-import { StoreDTO } from "../dto/storeDTO";
-
-import { DocumentTypeEnum } from "../enums/documentTypeEnum";
 import { AddressDTO } from "../dto/addressDTO";
+import { StoreDTO } from "../dto/storeDTO";
+import { DocumentTypeEnum } from "../enums/documentTypeEnum";
+import { Address } from "../models/address";
+import { Store } from "../models/store";
 
 export class StoreUtils {
   static toStore(
@@ -16,7 +15,7 @@ export class StoreUtils {
       addressData.cep,
       addressData.logradouro,
       storeDTO.address.number || "S/N",
-      "",
+      storeDTO.address.complement || "",
       addressData.bairro,
       addressData.localidade,
       addressData.uf
@@ -42,6 +41,7 @@ export class StoreUtils {
     );
   }
 }
+
 export class DistanceCalculator {
   private static readonly EARTH_RADIUS = 6371;
 
@@ -56,7 +56,7 @@ export class DistanceCalculator {
     lon2: number
   ): number {
     const dLat = DistanceCalculator.toRadians(lat2 - lat1);
-    const dLon = DistanceCalculator.toRadians(lon1 - lon2);
+    const dLon = DistanceCalculator.toRadians(lon2 - lon1);
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos(DistanceCalculator.toRadians(lat1)) *
@@ -68,7 +68,7 @@ export class DistanceCalculator {
   }
 
   static formatDistance(distance: number): string {
-    return distance === 0 ? "0 km" : distance.toFixed(2) + " km";
+    return distance.toFixed(2) + " km";
   }
 
   static filterNearbyStores(
@@ -77,42 +77,32 @@ export class DistanceCalculator {
     longitude: number,
     radius: number
   ): StoreDTO[] {
-    const uniqueStores = new Set<string>();
-    const filteredStores = stores
-      .filter(
-        (store) => store.getLatitude() !== null && store.getLongitude() !== null
-      )
-      .map((store) => {
+    const filteredStores: StoreDTO[] = [];
+
+    stores.forEach((store) => {
+      const storeLat = store.getLatitude();
+      const storeLon = store.getLongitude();
+
+      if (storeLat !== null && storeLon !== null) {
         const distance = DistanceCalculator.calculateDistance(
           latitude,
           longitude,
-          store.getLatitude(),
-          store.getLongitude()
+          storeLat,
+          storeLon
         );
 
-        const storeDTO = StoreDTO.fromStore(store, distance);
-        storeDTO.distance = DistanceCalculator.formatDistance(distance);
+        if (distance <= radius) {
+          const storeDTO = StoreDTO.fromStore(store, distance);
+          storeDTO.distance = DistanceCalculator.formatDistance(distance);
 
-        const storeIdentifier = `${storeDTO.name}-${storeDTO.address}`;
-        if (
-          storeDTO.name &&
-          storeDTO.address &&
-          !uniqueStores.has(storeIdentifier)
-        ) {
-          uniqueStores.add(storeIdentifier);
-          return storeDTO;
+          filteredStores.push(storeDTO);
         }
-        return null;
-      })
-      .filter((storeDTO): storeDTO is StoreDTO => storeDTO !== null)
-      .filter(
-        (storeDTO) =>
-          storeDTO.distance !== undefined &&
-          parseFloat(storeDTO.distance) <= radius
-      )
-      .sort(
-        (a, b) => parseFloat(a.distance || "0") - parseFloat(b.distance || "0")
-      );
+      }
+    });
+
+    filteredStores.sort(
+      (a, b) => parseFloat(a.distance) - parseFloat(b.distance)
+    );
 
     if (filteredStores.length === 0) {
       throw new Error("Nenhuma loja encontrada em um raio de 100 km.");
@@ -139,7 +129,6 @@ export const determineDocumentType = (
       );
     }
   } else {
-    // Retorna um valor padrão ou faz outra lógica quando a validação está desabilitada
     return cleanedDocument.length === 11
       ? DocumentTypeEnum.CPF
       : DocumentTypeEnum.CNPJ;

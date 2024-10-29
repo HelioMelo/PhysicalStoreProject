@@ -9,7 +9,7 @@ const geocodeAddressApi = async (address: string) => {
         params: {
           q: address,
           format: "json",
-          limit: 1,
+          limit: 100,
         },
       }
     );
