@@ -16,7 +16,7 @@ export class AddressService {
         "Erro ao obter dados do endereço: " +
           (error instanceof Error ? error.message : "Erro desconhecido")
       );
-    }
+    } 
   }
 
   static async getCoordinates(
