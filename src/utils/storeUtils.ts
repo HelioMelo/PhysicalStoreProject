@@ -1,24 +1,25 @@
 import { AddressDTO } from "../dto/addressDTO";
 import { StoreDTO } from "../dto/storeDTO";
 import { DocumentTypeEnum } from "../enums/documentTypeEnum";
+import { AddressData } from "../interfaces/addressData";
 import { Address } from "../models/address";
 import { Store } from "../models/store";
 
 export class StoreUtils {
   static toStore(
     storeDTO: StoreDTO,
-    addressData: any,
+    addressData: AddressData,
     coordinates: { latitude: number; longitude: number }
   ): Store {
     const addressDTO = new AddressDTO(
       0,
-      addressData.cep,
-      addressData.logradouro,
-      storeDTO.address.number || "S/N",
+      addressData.zipCode,
+      addressData.street,
+      storeDTO.address.number || "N/A",
       storeDTO.address.complement || "",
-      addressData.bairro,
-      addressData.localidade,
-      addressData.uf
+      addressData.neighborhood,
+      addressData.city,
+      addressData.state
     );
 
     return new Store(

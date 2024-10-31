@@ -33,7 +33,7 @@ describe("StoreService", () => {
     (saveStore as jest.Mock).mockResolvedValue({
       id: 1,
       name: "Loja Exemplo",
-      document: "12345678909", // CPF sem formatação
+      document: "12345678909",
       addressId: 1,
       latitude: -23.55052,
       longitude: -46.633308,
@@ -53,7 +53,7 @@ describe("StoreService", () => {
     const storeDTO = new StoreDTO(
       1,
       "Loja Exemplo",
-      "12345678909", // CPF sem formatação
+      "12345678909",
       address,
       DocumentTypeEnum.CPF
     );
@@ -62,7 +62,7 @@ describe("StoreService", () => {
 
     expect(savedStore).toHaveProperty("id", 1);
     expect(savedStore).toHaveProperty("name", "Loja Exemplo");
-    expect(savedStore).toHaveProperty("document", "12345678909"); // CPF sem formatação
+    expect(savedStore).toHaveProperty("document", "12345678909");
     expect(savedStore).toHaveProperty("documentType", "CPF");
   });
 
@@ -80,7 +80,7 @@ describe("StoreService", () => {
     const storeDTO = new StoreDTO(
       1,
       "Loja Inválida",
-      "1234567890", // CPF inválido
+      "1234567890",
       address,
       DocumentTypeEnum.CPF
     );
@@ -104,7 +104,7 @@ describe("StoreService", () => {
     const storeDTO = new StoreDTO(
       1,
       "Loja Inválida",
-      "1234567800019", // CNPJ inválido
+      "1234567800019",
       address,
       DocumentTypeEnum.CNPJ
     );

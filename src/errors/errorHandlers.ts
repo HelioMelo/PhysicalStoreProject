@@ -64,3 +64,10 @@ export const sendErrorResponse = (
   logger.error(message);
   res.status(statusCode).json({ error: message });
 };
+
+export class ValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ValidationError";
+  }
+}

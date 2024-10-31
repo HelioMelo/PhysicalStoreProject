@@ -1,30 +1,36 @@
+import { AddressService } from "./addressService";
 import {
   determineDocumentType,
+  DistanceCalculator,
   isValidCNPJ,
   isValidCPF,
-  DistanceCalculator,
   StoreUtils,
 } from "../utils/storeUtils";
-import { zipCodeApi } from "../api/zipCodeApi";
-import { geocodeAddressApi } from "../api/geocodeAddressApi";
-import { saveStore, getAllStores } from "../repository/storeRepository";
 import { StoreDTO } from "../dto/storeDTO";
 import { handleError, validateStoreDTO } from "../errors/errorHandlers";
-import { AddressService } from "./addressService";
 import { ValidationError, handleKnownErrors } from "../errors/customErrors";
+import { AddressData } from "../interfaces/addressData";
+import { saveStore, getAllStores } from "../repository/storeRepository";
+
 import { DocumentTypeEnum } from "../enums/documentTypeEnum";
+import { zipCodeApi } from "../api/zipCodeApi";
 
 export class StoreService {
   static async saveStore(storeDTO: StoreDTO): Promise<StoreDTO> {
     try {
       validateStoreDTO(storeDTO);
-
       storeDTO.documentType = this.validateDocument(storeDTO.document);
 
-      const addressData = await this.getAddressData(storeDTO.address.zipCode);
-      const coordinates = await this.getCoordinates(
-        addressData,
+      const addressData: AddressData = await AddressService.getFullAddress(
+        storeDTO.address.zipCode,
         storeDTO.address.number
+      );
+      const { street, city, state } = addressData;
+
+      const coordinates = await AddressService.getCoordinates(
+        street,
+        state,
+        city
       );
 
       const store = StoreUtils.toStore(storeDTO, addressData, coordinates);
@@ -42,19 +48,29 @@ export class StoreService {
   ): Promise<StoreDTO[]> {
     try {
       if (!zipCode) {
-        throw new ValidationError("O CEP é obrigatório.");
+        throw new ValidationError("Código postal é obrigatório");
       }
 
-      const fullAddress = await AddressService.getFullAddress(zipCode, number);
-      const coordinates = await AddressService.getCoordinates(fullAddress);
+      const addressData: AddressData = await AddressService.getFullAddress(
+        zipCode,
+        number
+      );
+      const { street, city, state } = addressData;
+
+      const coordinates = await AddressService.getCoordinates(
+        street,
+        state,
+        city
+      );
+
       const nearbyStores = await this.getNearbyStores(
-        coordinates.latitude,
-        coordinates.longitude
+        coordinates.latitude.toString(),
+        coordinates.longitude.toString()
       );
 
       if (nearbyStores.length === 0) {
         throw new ValidationError(
-          "Nenhuma loja encontrada num raio de 100 km."
+          "Nenhuma loja encontrada em um raio de 100 km."
         );
       }
 
@@ -87,15 +103,6 @@ export class StoreService {
       throw new ValidationError("Endereço não encontrado.");
     }
     return addressData;
-  }
-
-  private static async getCoordinates(addressData: any, number?: string) {
-    const fullAddress = `${addressData.logradouro}, ${number || "S/N"}`;
-    const coordinates = await geocodeAddressApi(fullAddress);
-    if (!coordinates) {
-      throw new ValidationError("Não foi possível obter as coordenadas.");
-    }
-    return coordinates;
   }
 
   private static async getNearbyStores(
