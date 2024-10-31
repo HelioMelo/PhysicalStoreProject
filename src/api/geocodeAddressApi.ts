@@ -1,39 +1,44 @@
 import logger from "../utils/logger";
 import axios from "axios";
 
-const geocodeAddressApi = async (address: string) => {
+const geocodeAddressApi = async (
+  street: string,
+  state: string,
+  city: string
+) => {
   try {
+    logger.info(`Starting geocoding for: ${street}, ${state}, ${city}`);
+
     const response = await axios.get(
       "https://nominatim.openstreetmap.org/search",
       {
         params: {
-          q: address,
+          street: street,
+          state: state,
+          city: city,
           format: "json",
-          limit: 100,
+          limit: 1,
         },
       }
     );
 
     if (response.status !== 200) {
       logger.error(
-        `Erro na solicitação de geocodificação: ${response.statusText}`
+        `Erro de solicitação de geocodificação: ${response.statusText}`
       );
-      throw new Error("Erro na solicitação de geocodificação.");
+      throw new Error("Erro de solicitação de geocodificação.");
     }
 
     const data = response.data;
     if (data.length === 0) {
-      logger.warn(`Coordenadas não encontradas para o endereço: ${address}`);
-      throw new Error(
-        "Não foi possível encontrar as coordenadas para o endereço."
-      );
+      logger.warn(`Coordenadas não encontradas para o endereço: ${street}`);
+      throw new Error("Não foi possível encontrar as coordenadas do endereço.");
     }
 
-    logger.info(`Geocodificação bem-sucedida para endereço: ${address}`);
-
+    logger.info(`Geocodificação bem-sucedida para endereço: ${street}`);
     return {
-      latitude: data[0].lat,
-      longitude: data[0].lon,
+      latitude: parseFloat(data[0].lat),
+      longitude: parseFloat(data[0].lon),
     };
   } catch (error) {
     if (error instanceof Error) {
@@ -41,7 +46,7 @@ const geocodeAddressApi = async (address: string) => {
       throw error;
     } else {
       logger.error(`Erro de geocodificação: ocorreu um erro desconhecido.`);
-      throw new Error("Ocorreu um erro desconhecido");
+      throw new Error("O correu um erro desconhecido");
     }
   }
 };
